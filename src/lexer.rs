@@ -17,15 +17,15 @@ static KEYWORDS: Lazy<HashMap<&str, TokenType>> = Lazy::new(|| {
     keywords
 });
 
-pub struct Lexer {
-    pub input: String,
+pub struct Lexer<'a> {
+    pub input: &'a str,
     pub position: usize,
     pub read_position: usize,
     pub ch: Option<char>,
 }
 
-impl Lexer {
-    pub fn new(input: String) -> Self {
+impl<'a> Lexer<'a> {
+    pub fn new(input: &'a str) -> Self {
         let mut lexer = Self {
             input,
             position: 0,
@@ -283,7 +283,7 @@ mod tests {
             (TokenType::Eof, ""),
         ];
 
-        let mut lexer = Lexer::new(input.to_string());
+        let mut lexer = Lexer::new(&input);
 
         for expected in expected_values.iter() {
             let token = lexer.next_token();
