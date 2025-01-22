@@ -6,7 +6,13 @@ pub enum TokenType {
     Int,
     Assign,
     Plus,
+    Minus,
+    Bang,
+    Asterisk,
+    Slash,
     Comma,
+    LessThan,
+    GreaterThan,
     Semicolon,
     LeftParen,
     RightParen,
@@ -14,6 +20,13 @@ pub enum TokenType {
     RightBrace,
     Function,
     Let,
+    True,
+    False,
+    If,
+    Else,
+    Return,
+    Equal,
+    NotEqual,
 }
 
 #[derive(Debug)]

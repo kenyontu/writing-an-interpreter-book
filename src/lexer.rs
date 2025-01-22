@@ -8,6 +8,11 @@ static KEYWORDS: Lazy<HashMap<&str, TokenType>> = Lazy::new(|| {
     let mut keywords = HashMap::new();
     keywords.insert("fn", TokenType::Function);
     keywords.insert("let", TokenType::Let);
+    keywords.insert("true", TokenType::True);
+    keywords.insert("false", TokenType::False);
+    keywords.insert("if", TokenType::If);
+    keywords.insert("else", TokenType::Else);
+    keywords.insert("return", TokenType::Return);
 
     keywords
 });
@@ -46,12 +51,32 @@ impl Lexer {
         self.skip_whitespace();
 
         let token: Token = match self.ch {
-            Some('=') => Token::new(TokenType::Assign, "=".to_string()),
+            Some('=') => {
+                if matches!(self.peek_char(), Some('=')) {
+                    self.read_char();
+                    Token::new(TokenType::Equal, "==".to_string())
+                } else {
+                    Token::new(TokenType::Assign, "=".to_string())
+                }
+            }
+            Some('+') => Token::new(TokenType::Plus, "+".to_string()),
+            Some('-') => Token::new(TokenType::Minus, "-".to_string()),
+            Some('!') => {
+                if matches!(self.peek_char(), Some('=')) {
+                    self.read_char();
+                    Token::new(TokenType::NotEqual, "!=".to_string())
+                } else {
+                    Token::new(TokenType::Bang, "!".to_string())
+                }
+            }
+            Some('/') => Token::new(TokenType::Slash, "/".to_string()),
+            Some('*') => Token::new(TokenType::Asterisk, "*".to_string()),
+            Some('<') => Token::new(TokenType::LessThan, "<".to_string()),
+            Some('>') => Token::new(TokenType::GreaterThan, ">".to_string()),
+            Some(',') => Token::new(TokenType::Comma, ",".to_string()),
             Some(';') => Token::new(TokenType::Semicolon, ";".to_string()),
             Some('(') => Token::new(TokenType::LeftParen, "(".to_string()),
             Some(')') => Token::new(TokenType::RightParen, ")".to_string()),
-            Some(',') => Token::new(TokenType::Comma, ",".to_string()),
-            Some('+') => Token::new(TokenType::Plus, "+".to_string()),
             Some('{') => Token::new(TokenType::LeftBrace, "{".to_string()),
             Some('}') => Token::new(TokenType::RightBrace, "}".to_string()),
             Some(ch) => {
@@ -142,6 +167,14 @@ impl Lexer {
             }
         }
     }
+
+    fn peek_char(&self) -> Option<char> {
+        if self.read_position >= self.input.len() {
+            None
+        } else {
+            self.input.chars().nth(self.read_position)
+        }
+    }
 }
 
 #[cfg(test)]
@@ -160,6 +193,17 @@ mod tests {
           };
 
           let result = add(five, ten);
+          !-/*5;
+          5 < 10 > 5;
+
+          if (5 < 10) {
+            return true;
+          } else {
+            return false;
+          }
+
+          10 == 10;
+          10 != 9;
         "#;
 
         let expected_values = vec![
@@ -198,6 +242,43 @@ mod tests {
             (TokenType::Comma, ","),
             (TokenType::Ident, "ten"),
             (TokenType::RightParen, ")"),
+            (TokenType::Semicolon, ";"),
+            (TokenType::Bang, "!"),
+            (TokenType::Minus, "-"),
+            (TokenType::Slash, "/"),
+            (TokenType::Asterisk, "*"),
+            (TokenType::Int, "5"),
+            (TokenType::Semicolon, ";"),
+            (TokenType::Int, "5"),
+            (TokenType::LessThan, "<"),
+            (TokenType::Int, "10"),
+            (TokenType::GreaterThan, ">"),
+            (TokenType::Int, "5"),
+            (TokenType::Semicolon, ";"),
+            (TokenType::If, "if"),
+            (TokenType::LeftParen, "("),
+            (TokenType::Int, "5"),
+            (TokenType::LessThan, "<"),
+            (TokenType::Int, "10"),
+            (TokenType::RightParen, ")"),
+            (TokenType::LeftBrace, "{"),
+            (TokenType::Return, "return"),
+            (TokenType::True, "true"),
+            (TokenType::Semicolon, ";"),
+            (TokenType::RightBrace, "}"),
+            (TokenType::Else, "else"),
+            (TokenType::LeftBrace, "{"),
+            (TokenType::Return, "return"),
+            (TokenType::False, "false"),
+            (TokenType::Semicolon, ";"),
+            (TokenType::RightBrace, "}"),
+            (TokenType::Int, "10"),
+            (TokenType::Equal, "=="),
+            (TokenType::Int, "10"),
+            (TokenType::Semicolon, ";"),
+            (TokenType::Int, "10"),
+            (TokenType::NotEqual, "!="),
+            (TokenType::Int, "9"),
             (TokenType::Semicolon, ";"),
             (TokenType::Eof, ""),
         ];
