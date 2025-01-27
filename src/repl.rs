@@ -23,7 +23,7 @@ pub fn start() {
                     token = lexer.next_token();
                 }
 
-                print!("\n");
+                println!();
             }
             Err(error) => println!("Error: {error}"),
         }

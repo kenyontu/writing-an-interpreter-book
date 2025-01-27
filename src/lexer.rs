@@ -102,18 +102,11 @@ impl<'a> Lexer<'a> {
 
     fn read_identifier(&mut self) -> &str {
         let position = self.position;
-        loop {
-            match self.ch {
-                Some(ch) => {
-                    if Self::is_letter(&ch) {
-                        self.read_char();
-                    } else {
-                        break;
-                    }
-                }
-                None => {
-                    break;
-                }
+        while let Some(ch) = self.ch {
+            if Self::is_letter(&ch) {
+                self.read_char();
+            } else {
+                break;
             }
         }
 
@@ -122,16 +115,11 @@ impl<'a> Lexer<'a> {
 
     fn read_number(&mut self) -> &str {
         let position = self.position;
-        loop {
-            match self.ch {
-                Some(ch) => {
-                    if Self::is_digit(&ch) {
-                        self.read_char();
-                    } else {
-                        break;
-                    }
-                }
-                None => todo!(),
+        while let Some(ch) = self.ch {
+            if Self::is_digit(&ch) {
+                self.read_char();
+            } else {
+                break;
             }
         }
 
@@ -143,7 +131,7 @@ impl<'a> Lexer<'a> {
     }
 
     fn is_digit(ch: &char) -> bool {
-        ch.is_digit(10)
+        ch.is_ascii_digit()
     }
 
     fn lookup_ident(ident: &str) -> TokenType {
@@ -154,16 +142,11 @@ impl<'a> Lexer<'a> {
     }
 
     fn skip_whitespace(&mut self) {
-        loop {
-            match self.ch {
-                Some(ch) => {
-                    if ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r' {
-                        self.read_char();
-                    } else {
-                        break;
-                    }
-                }
-                None => break,
+        while let Some(ch) = self.ch {
+            if ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r' {
+                self.read_char();
+            } else {
+                break;
             }
         }
     }
