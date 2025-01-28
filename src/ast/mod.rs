@@ -1,16 +1,27 @@
-use crate::token::Token;
+pub mod expression_ident;
+pub mod statement_let;
+pub mod statement_return;
 
-pub trait Node {
+use expression_ident::IdentExpression;
+use statement_let::LetStatement;
+use statement_return::ReturnStatement;
+
+pub trait NodeTrait {
     fn token_literal(&self) -> &str;
 }
 
 // Using trait inheritance
-pub trait StatementTrait: Node {
+pub trait StatementTrait: NodeTrait {
     fn statement_node(&self);
+}
+
+pub trait ExpressionTrait {
+    fn expression_node(&self);
 }
 
 pub enum Statement {
     Let(LetStatement),
+    Return(ReturnStatement),
 }
 
 impl Statement {
@@ -18,12 +29,13 @@ impl Statement {
         use Statement::*;
         match self {
             Let(s) => s.token_literal(),
+            Return(s) => s.token_literal(),
         }
     }
 }
 
-pub trait Expression {
-    fn expression_node(&self);
+pub enum Expression {
+    Ident(IdentExpression),
 }
 
 pub struct Program {
@@ -38,7 +50,7 @@ impl Program {
     }
 }
 
-impl Node for Program {
+impl NodeTrait for Program {
     fn token_literal(&self) -> &str {
         // TDOO: Should this return a Option<String> ?
         if !self.statements.is_empty() {
@@ -47,35 +59,4 @@ impl Node for Program {
             ""
         }
     }
-}
-
-pub struct Identifier {
-    pub token: Token,
-    pub value: String,
-}
-
-impl Node for Identifier {
-    fn token_literal(&self) -> &str {
-        &self.token.literal
-    }
-}
-
-impl Expression for Identifier {
-    fn expression_node(&self) {}
-}
-
-pub struct LetStatement {
-    pub token: Token,
-    pub name: Identifier,
-    pub value: Box<dyn Expression>,
-}
-
-impl Node for LetStatement {
-    fn token_literal(&self) -> &str {
-        &self.token.literal
-    }
-}
-
-impl StatementTrait for LetStatement {
-    fn statement_node(&self) {}
 }
