@@ -1,6 +1,7 @@
-use crate::token::Token;
-
-use super::{ExpressionTrait, NodeTrait};
+use crate::{
+    ast::{ExpressionTrait, NodeTrait},
+    token::Token,
+};
 
 pub struct IdentExpression {
     pub token: Token,

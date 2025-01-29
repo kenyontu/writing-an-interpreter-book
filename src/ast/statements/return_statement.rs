@@ -1,6 +1,7 @@
-use crate::token::Token;
-
-use super::{Expression, NodeTrait, StatementTrait};
+use crate::{
+    ast::{Expression, NodeTrait, StatementTrait},
+    token::Token,
+};
 
 pub struct ReturnStatement {
     pub token: Token,

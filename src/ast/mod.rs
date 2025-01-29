@@ -1,10 +1,8 @@
-pub mod expression_ident;
-pub mod statement_let;
-pub mod statement_return;
+pub mod expressions;
+pub mod statements;
 
-use expression_ident::IdentExpression;
-use statement_let::LetStatement;
-use statement_return::ReturnStatement;
+use expressions::IdentExpression;
+use statements::{LetStatement, ReturnStatement};
 
 pub trait NodeTrait {
     fn token_literal(&self) -> &str;

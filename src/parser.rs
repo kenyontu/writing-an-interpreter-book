@@ -2,8 +2,10 @@ use std::{borrow::BorrowMut, mem};
 
 use crate::{
     ast::{
-        self, expression_ident::IdentExpression, statement_let::LetStatement,
-        statement_return::ReturnStatement, Expression,
+        self,
+        expressions::IdentExpression,
+        statements::{LetStatement, ReturnStatement},
+        Expression,
     },
     lexer::Lexer,
     token::{Token, TokenType},
