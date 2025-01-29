@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::{
     ast::{Expression, NodeTrait, StatementTrait},
     token::Token,
@@ -6,6 +8,12 @@ use crate::{
 pub struct ReturnStatement {
     pub token: Token,
     pub value: Expression,
+}
+
+impl Display for ReturnStatement {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} {};", self.token_literal(), self.value.to_string())
+    }
 }
 
 impl NodeTrait for ReturnStatement {

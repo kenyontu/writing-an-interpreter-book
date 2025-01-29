@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::{
     ast::{expressions::IdentExpression, Expression, NodeTrait, StatementTrait},
     token::Token,
@@ -7,6 +9,18 @@ pub struct LetStatement {
     pub token: Token,
     pub name: IdentExpression,
     pub value: Expression,
+}
+
+impl Display for LetStatement {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{} {} = {};",
+            self.token_literal(),
+            self.name.to_string(),
+            self.value.to_string()
+        )
+    }
 }
 
 impl NodeTrait for LetStatement {

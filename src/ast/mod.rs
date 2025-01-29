@@ -1,10 +1,12 @@
 pub mod expressions;
 pub mod statements;
 
-use expressions::IdentExpression;
-use statements::{LetStatement, ReturnStatement};
+use std::fmt::Display;
 
-pub trait NodeTrait {
+use expressions::IdentExpression;
+use statements::{ExpressionStatement, LetStatement, ReturnStatement};
+
+pub trait NodeTrait: Display {
     fn token_literal(&self) -> &str;
 }
 
@@ -20,6 +22,7 @@ pub trait ExpressionTrait: NodeTrait {
 pub enum Statement {
     Let(LetStatement),
     Return(ReturnStatement),
+    Expression(ExpressionStatement),
 }
 
 impl Statement {
@@ -28,12 +31,31 @@ impl Statement {
         match self {
             Let(s) => s.token_literal(),
             Return(s) => s.token_literal(),
+            Expression(s) => s.token_literal(),
+        }
+    }
+
+    pub fn to_string(&self) -> String {
+        use Statement::*;
+        match self {
+            Let(s) => s.to_string(),
+            Return(s) => s.to_string(),
+            Expression(s) => s.to_string(),
         }
     }
 }
 
 pub enum Expression {
     Ident(IdentExpression),
+}
+
+impl Expression {
+    pub fn to_string(&self) -> String {
+        use Expression::*;
+        match self {
+            Ident(e) => e.to_string(),
+        }
+    }
 }
 
 pub struct Program {
@@ -48,6 +70,15 @@ impl Program {
     }
 }
 
+impl Display for Program {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for stmt in self.statements.iter() {
+            write!(f, "{}\n", stmt.to_string())?;
+        }
+        Ok(())
+    }
+}
+
 impl NodeTrait for Program {
     fn token_literal(&self) -> &str {
         // TDOO: Should this return a Option<String> ?
@@ -56,5 +87,38 @@ impl NodeTrait for Program {
         } else {
             ""
         }
+    }
+}
+
+mod tests {
+    use crate::token::{Token, TokenType};
+
+    use super::*;
+
+    #[test]
+    fn test_to_string() {
+        let statements: Vec<Statement> = vec![Statement::Let(LetStatement {
+            token: Token {
+                token_type: TokenType::Let,
+                literal: "let".to_string(),
+            },
+            name: IdentExpression {
+                token: Token {
+                    token_type: TokenType::Ident,
+                    literal: "myVar".to_string(),
+                },
+                value: "myVar".to_string(),
+            },
+            value: Expression::Ident(IdentExpression {
+                token: Token {
+                    token_type: TokenType::Ident,
+                    literal: "anotherVar".to_string(),
+                },
+                value: "anotherVar".to_string(),
+            }),
+        })];
+
+        let program = Program { statements };
+        assert_eq!(program.to_string(), "let myVar = anotherVar;\n");
     }
 }
