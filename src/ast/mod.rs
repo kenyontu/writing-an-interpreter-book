@@ -13,7 +13,7 @@ pub trait StatementTrait: NodeTrait {
     fn statement_node(&self);
 }
 
-pub trait ExpressionTrait {
+pub trait ExpressionTrait: NodeTrait {
     fn expression_node(&self);
 }
 
