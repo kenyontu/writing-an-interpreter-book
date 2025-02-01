@@ -83,11 +83,11 @@ impl<'a> Parser<'a> {
     }
 
     fn cur_token_is(&self, token_type: &TokenType) -> bool {
-        self.cur_token.token_type == token_type.clone()
+        &self.cur_token.token_type == token_type
     }
 
     fn peek_token_is(&self, token_type: &TokenType) -> bool {
-        self.peek_token.token_type == token_type.clone()
+        &self.peek_token.token_type == token_type
     }
 
     fn expect_peek(&mut self, token_type: &TokenType) -> bool {
