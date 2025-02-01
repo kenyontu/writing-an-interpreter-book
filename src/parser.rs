@@ -4,12 +4,36 @@ use crate::{
     ast::{
         self,
         expressions::IdentExpression,
-        statements::{LetStatement, ReturnStatement},
-        Expression,
+        statements::{ExpressionStatement, LetStatement, ReturnStatement},
+        Expression, Statement,
     },
     lexer::Lexer,
     token::{Token, TokenType},
 };
+
+enum Precedence {
+    Lowest,
+    Equals,
+    LessGreater,
+    Sum,
+    Product,
+    Prefix,
+    Call,
+}
+
+impl Precedence {
+    pub fn value(&self) -> usize {
+        match self {
+            Precedence::Lowest => 1,
+            Precedence::Equals => 2,
+            Precedence::LessGreater => 3,
+            Precedence::Sum => 4,
+            Precedence::Product => 5,
+            Precedence::Prefix => 6,
+            Precedence::Call => 7,
+        }
+    }
+}
 
 struct Parser<'a> {
     pub lexer: Lexer<'a>,
@@ -53,32 +77,8 @@ impl<'a> Parser<'a> {
     pub fn parse_statement(&mut self) -> Option<ast::Statement> {
         match self.cur_token.token_type {
             TokenType::Let => self.parse_let_statement(),
-            TokenType::Illegal => None,
-            TokenType::Eof => None,
-            TokenType::Ident => None,
-            TokenType::Int => None,
-            TokenType::Assign => None,
-            TokenType::Plus => None,
-            TokenType::Minus => None,
-            TokenType::Bang => None,
-            TokenType::Asterisk => None,
-            TokenType::Slash => None,
-            TokenType::Comma => None,
-            TokenType::LessThan => None,
-            TokenType::GreaterThan => None,
-            TokenType::Semicolon => None,
-            TokenType::LeftParen => None,
-            TokenType::RightParen => None,
-            TokenType::LeftBrace => None,
-            TokenType::RightBrace => None,
-            TokenType::Function => None,
-            TokenType::True => None,
-            TokenType::False => None,
-            TokenType::If => None,
-            TokenType::Else => None,
             TokenType::Return => self.parse_return_statement(),
-            TokenType::Equal => None,
-            TokenType::NotEqual => None,
+            _ => self.parse_expression_statement(),
         }
     }
 
@@ -170,11 +170,75 @@ impl<'a> Parser<'a> {
         );
         self.errors.push(error_msg);
     }
+
+    fn prefix_parse(&self) -> Option<ast::Expression> {
+        match self.cur_token.token_type {
+            TokenType::Illegal => todo!(),
+            TokenType::Eof => todo!(),
+            TokenType::Ident => {
+                let ident = IdentExpression {
+                    token: self.cur_token.clone(),
+                    value: self.cur_token.literal.clone(),
+                };
+
+                Some(ast::Expression::Ident(ident))
+            }
+            TokenType::Int => todo!(),
+            TokenType::Assign => todo!(),
+            TokenType::Plus => todo!(),
+            TokenType::Minus => todo!(),
+            TokenType::Bang => todo!(),
+            TokenType::Asterisk => todo!(),
+            TokenType::Slash => todo!(),
+            TokenType::Comma => todo!(),
+            TokenType::LessThan => todo!(),
+            TokenType::GreaterThan => todo!(),
+            TokenType::Semicolon => todo!(),
+            TokenType::LeftParen => todo!(),
+            TokenType::RightParen => todo!(),
+            TokenType::LeftBrace => todo!(),
+            TokenType::RightBrace => todo!(),
+            TokenType::Function => todo!(),
+            TokenType::Let => todo!(),
+            TokenType::True => todo!(),
+            TokenType::False => todo!(),
+            TokenType::If => todo!(),
+            TokenType::Else => todo!(),
+            TokenType::Return => todo!(),
+            TokenType::Equal => todo!(),
+            TokenType::NotEqual => todo!(),
+        }
+    }
+
+    fn infix_parse(&self, expression: ast::Expression) -> Option<ast::Expression> {
+        todo!();
+    }
+
+    fn parse_expression_statement(&mut self) -> Option<ast::Statement> {
+        let expression = self.parse_expression(Precedence::Lowest.value())?;
+
+        let stmt = ExpressionStatement {
+            token: self.cur_token.clone(),
+            expression,
+        };
+
+        if self.peek_token_is(&TokenType::Semicolon) {
+            self.next_token();
+        }
+
+        Some(ast::Statement::Expression(stmt))
+    }
+
+    fn parse_expression(&self, precedence: usize) -> Option<ast::Expression> {
+        self.prefix_parse()
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use ast::NodeTrait;
+    use core::panic;
+
+    use ast::{statements::ExpressionStatement, NodeTrait, Statement};
 
     use super::*;
 
@@ -265,5 +329,31 @@ mod tests {
                 ),
             }
         }
+    }
+
+    #[test]
+    fn test_identifier_expression() {
+        let input = "foobar;";
+
+        let lexer = Lexer::new(&input);
+        let mut parser = Parser::new(lexer);
+        let program = parser.parse_program();
+        check_parser_errors(&parser);
+
+        assert_eq!(
+            program.statements.len(),
+            1,
+            "The program should contain 1 statement"
+        );
+
+        let Statement::Expression(stmt) = &program.statements[0] else {
+            panic!("Statement isn't an expression");
+        };
+
+        let Expression::Ident(ident) = &stmt.expression else {
+            panic!("Expression isn't an identifier");
+        };
+
+        assert_eq!(ident.token_literal(), "foobar");
     }
 }
