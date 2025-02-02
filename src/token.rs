@@ -1,3 +1,5 @@
+use crate::parser::Precedence;
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum TokenType {
     Illegal,
@@ -57,6 +59,25 @@ impl TokenType {
             TokenType::Equal => "==",
             TokenType::NotEqual => "!=",
             _ => "",
+        }
+    }
+
+    pub fn precedence(&self) -> Precedence {
+        use TokenType::*;
+        match self {
+            Plus | Minus => Precedence::Sum,
+            Asterisk | Slash => Precedence::Product,
+            LessThan | GreaterThan => Precedence::LessGreater,
+            Equal | NotEqual => Precedence::Equals,
+            _ => Precedence::Lowest,
+        }
+    }
+
+    pub fn is_infix(&self) -> bool {
+        use TokenType::*;
+        match self {
+            Plus | Minus | Asterisk | Slash | LessThan | GreaterThan | Equal | NotEqual => true,
+            _ => false,
         }
     }
 }

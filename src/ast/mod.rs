@@ -3,7 +3,7 @@ pub mod statements;
 
 use std::fmt::Display;
 
-use expressions::{IdentExpression, IntegerLiteral, PrefixExpression};
+use expressions::{IdentExpression, InfixExpression, IntegerLiteral, PrefixExpression};
 use statements::{ExpressionStatement, LetStatement, ReturnStatement};
 
 pub trait NodeTrait: Display {
@@ -49,6 +49,7 @@ pub enum Expression {
     Ident(IdentExpression),
     Integer(IntegerLiteral),
     Prefix(PrefixExpression),
+    Infix(InfixExpression),
 }
 
 impl Expression {
@@ -58,6 +59,7 @@ impl Expression {
             Ident(e) => e.to_string(),
             Integer(e) => e.to_string(),
             Prefix(e) => e.to_string(),
+            Infix(e) => e.to_string(),
         }
     }
 }
@@ -77,7 +79,7 @@ impl Program {
 impl Display for Program {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for stmt in self.statements.iter() {
-            write!(f, "{}\n", stmt.to_string())?;
+            write!(f, "{}", stmt.to_string())?;
         }
         Ok(())
     }
@@ -123,6 +125,6 @@ mod tests {
         })];
 
         let program = Program { statements };
-        assert_eq!(program.to_string(), "let myVar = anotherVar;\n");
+        assert_eq!(program.to_string(), "let myVar = anotherVar;");
     }
 }
