@@ -13,7 +13,7 @@ pub struct PrefixExpression {
 
 impl Display for PrefixExpression {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "({}{})", self.operator, self.right.to_string())
+        write!(f, "({}{})", self.operator, self.right)
     }
 }
 

@@ -34,13 +34,15 @@ impl Statement {
             Expression(s) => s.token_literal(),
         }
     }
+}
 
-    pub fn to_string(&self) -> String {
+impl Display for Statement {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use Statement::*;
         match self {
-            Let(s) => s.to_string(),
-            Return(s) => s.to_string(),
-            Expression(s) => s.to_string(),
+            Let(s) => write!(f, "{s}"),
+            Return(s) => write!(f, "{s}"),
+            Expression(s) => write!(f, "{s}"),
         }
     }
 }
@@ -52,14 +54,14 @@ pub enum Expression {
     Infix(InfixExpression),
 }
 
-impl Expression {
-    pub fn to_string(&self) -> String {
+impl Display for Expression {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use Expression::*;
         match self {
-            Ident(e) => e.to_string(),
-            Integer(e) => e.to_string(),
-            Prefix(e) => e.to_string(),
-            Infix(e) => e.to_string(),
+            Ident(e) => write!(f, "{e}"),
+            Integer(e) => write!(f, "{e}"),
+            Prefix(e) => write!(f, "{e}"),
+            Infix(e) => write!(f, "{e}"),
         }
     }
 }
@@ -79,7 +81,7 @@ impl Program {
 impl Display for Program {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for stmt in self.statements.iter() {
-            write!(f, "{}", stmt.to_string())?;
+            write!(f, "{}", stmt)?;
         }
         Ok(())
     }

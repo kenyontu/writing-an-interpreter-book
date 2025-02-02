@@ -126,11 +126,11 @@ impl<'a> Parser<'a> {
     }
 
     fn expect_peek(&mut self, token_type: &TokenType) -> bool {
-        if self.peek_token_is(&token_type) {
+        if self.peek_token_is(token_type) {
             self.next_token();
             true
         } else {
-            self.peek_error(&token_type);
+            self.peek_error(token_type);
             false
         }
     }
@@ -316,7 +316,7 @@ impl<'a> Parser<'a> {
 mod tests {
     use core::panic;
 
-    use ast::{expressions::IntegerLiteral, NodeTrait, Statement};
+    use ast::{NodeTrait, Statement};
 
     use super::*;
 

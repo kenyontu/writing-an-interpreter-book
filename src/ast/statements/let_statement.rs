@@ -17,8 +17,8 @@ impl Display for LetStatement {
             f,
             "{} {} = {};",
             self.token_literal(),
-            self.name.to_string(),
-            self.value.to_string()
+            self.name,
+            self.value
         )
     }
 }

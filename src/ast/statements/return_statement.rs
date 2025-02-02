@@ -12,7 +12,7 @@ pub struct ReturnStatement {
 
 impl Display for ReturnStatement {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} {};", self.token_literal(), self.value.to_string())
+        write!(f, "{} {};", self.token_literal(), self.value)
     }
 }
 

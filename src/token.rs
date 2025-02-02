@@ -75,10 +75,10 @@ impl TokenType {
 
     pub fn is_infix(&self) -> bool {
         use TokenType::*;
-        match self {
-            Plus | Minus | Asterisk | Slash | LessThan | GreaterThan | Equal | NotEqual => true,
-            _ => false,
-        }
+        matches!(
+            self,
+            Plus | Minus | Asterisk | Slash | LessThan | GreaterThan | Equal | NotEqual
+        )
     }
 }
 
