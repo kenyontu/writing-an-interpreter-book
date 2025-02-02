@@ -3,25 +3,35 @@ use std::{borrow::BorrowMut, mem};
 use crate::{
     ast::{
         self,
-        expressions::IdentExpression,
+        expressions::{IdentExpression, IntegerLiteral},
         statements::{ExpressionStatement, LetStatement, ReturnStatement},
-        Expression, Statement,
+        Expression,
     },
     lexer::Lexer,
     token::{Token, TokenType},
 };
 
+/// Enum containing the operators in the language, so we can assign
+/// them to a precedence level.
 enum Precedence {
+    /// The lowest level of precedence
     Lowest,
+    /// For `==` operators
     Equals,
+    /// For `>` or `<` operators
     LessGreater,
-    Sum,
+    /// For `+` operators
+    Sum, // +
+    /// For `*` operators
     Product,
+    /// For `-x` or `!x` operators
     Prefix,
+    /// For function calls like `my_function()`
     Call,
 }
 
 impl Precedence {
+    /// Returns the precedence value of each variant
     pub fn value(&self) -> usize {
         match self {
             Precedence::Lowest => 1,
@@ -36,9 +46,12 @@ impl Precedence {
 }
 
 struct Parser<'a> {
-    pub lexer: Lexer<'a>,
-    pub cur_token: Token,
-    pub peek_token: Token,
+    lexer: Lexer<'a>,
+    /// The current token being parsed
+    cur_token: Token,
+    /// The next token to parse
+    peek_token: Token,
+    /// The list of parsing errors
     errors: Vec<String>,
 }
 
@@ -56,10 +69,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn next_token(&mut self) {
-        self.cur_token = mem::replace(self.peek_token.borrow_mut(), self.lexer.next_token());
-    }
-
+    /// Starts parsing the input
     pub fn parse_program(&mut self) -> ast::Program {
         let mut program = ast::Program::new();
 
@@ -74,20 +84,37 @@ impl<'a> Parser<'a> {
         program
     }
 
-    pub fn parse_statement(&mut self) -> Option<ast::Statement> {
-        match self.cur_token.token_type {
-            TokenType::Let => self.parse_let_statement(),
-            TokenType::Return => self.parse_return_statement(),
-            _ => self.parse_expression_statement(),
-        }
+    /// Returns the list of parsing errors
+    pub fn errors(&self) -> &Vec<String> {
+        &self.errors
     }
 
+    /// Advance to the next token
+    fn next_token(&mut self) {
+        // Replaces the value of both `self.cur_token` and `self.peek_token`:
+        // - `self.cur_token` receives the current value of `self.peek_token`
+        // - `self.peek_token` receives the next token from the lexer
+        self.cur_token = mem::replace(self.peek_token.borrow_mut(), self.lexer.next_token());
+    }
+
+    /// Checks if the current token is of a given type
     fn cur_token_is(&self, token_type: &TokenType) -> bool {
         &self.cur_token.token_type == token_type
     }
 
+    /// Checks if the peek token is of a given type
     fn peek_token_is(&self, token_type: &TokenType) -> bool {
         &self.peek_token.token_type == token_type
+    }
+
+    /// Writes a parse error when the next token isn't the one expected
+    fn peek_error(&mut self, token_type: &TokenType) {
+        let error_msg = format!(
+            "expected next token to be \"{}\", got \"{}\" instead",
+            token_type.get_literal(),
+            self.peek_token.token_type.get_literal()
+        );
+        self.errors.push(error_msg);
     }
 
     fn expect_peek(&mut self, token_type: &TokenType) -> bool {
@@ -100,7 +127,15 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse_let_statement(&mut self) -> Option<ast::Statement> {
+    fn parse_statement(&mut self) -> Option<ast::Statement> {
+        match self.cur_token.token_type {
+            TokenType::Let => self.parse_let_statement(),
+            TokenType::Return => self.parse_return_statement(),
+            _ => self.parse_expression_statement(),
+        }
+    }
+
+    fn parse_let_statement(&mut self) -> Option<ast::Statement> {
         if !self.expect_peek(&TokenType::Ident) {
             return None;
         }
@@ -135,7 +170,10 @@ impl<'a> Parser<'a> {
         Some(ast::Statement::Let(let_stmt))
     }
 
-    pub fn parse_return_statement(&mut self) -> Option<ast::Statement> {
+    /// Parsers `self.cur_token` as a return statement.
+    fn parse_return_statement(&mut self) -> Option<ast::Statement> {
+        // TODO: The book left the value undefined, so I'm using dummy value until the
+        // comes back to this to implement it
         let dummy_value = IdentExpression {
             token: Token {
                 token_type: TokenType::Ident,
@@ -158,32 +196,43 @@ impl<'a> Parser<'a> {
         Some(ast::Statement::Return(stmt))
     }
 
-    pub fn errors(&self) -> &Vec<String> {
-        &self.errors
+    fn parse_identifier(&self) -> Option<ast::Expression> {
+        let ident = IdentExpression {
+            token: self.cur_token.clone(),
+            value: self.cur_token.literal.clone(),
+        };
+
+        Some(ast::Expression::Ident(ident))
     }
 
-    pub fn peek_error(&mut self, token_type: &TokenType) {
-        let error_msg = format!(
-            "expected next token to be \"{}\", got \"{}\" instead",
-            token_type.get_literal(),
-            self.peek_token.token_type.get_literal()
-        );
-        self.errors.push(error_msg);
+    /// Parsers `self.cur_token` as an integer literal.
+    fn parse_integer_literal(&mut self) -> Option<ast::Expression> {
+        let value = match self.cur_token.literal.parse::<i64>() {
+            Ok(v) => v,
+            Err(e) => {
+                let msg = format!(
+                    "Could not parse {} as integer: {}",
+                    self.cur_token.literal, e
+                );
+                self.errors.push(msg);
+                return None;
+            }
+        };
+
+        let lit = IntegerLiteral {
+            token: self.cur_token.clone(),
+            value,
+        };
+
+        Some(ast::Expression::Integer(lit))
     }
 
-    fn prefix_parse(&self) -> Option<ast::Expression> {
+    fn prefix_parse(&mut self) -> Option<ast::Expression> {
         match self.cur_token.token_type {
             TokenType::Illegal => todo!(),
             TokenType::Eof => todo!(),
-            TokenType::Ident => {
-                let ident = IdentExpression {
-                    token: self.cur_token.clone(),
-                    value: self.cur_token.literal.clone(),
-                };
-
-                Some(ast::Expression::Ident(ident))
-            }
-            TokenType::Int => todo!(),
+            TokenType::Ident => self.parse_identifier(),
+            TokenType::Int => self.parse_integer_literal(),
             TokenType::Assign => todo!(),
             TokenType::Plus => todo!(),
             TokenType::Minus => todo!(),
@@ -229,7 +278,7 @@ impl<'a> Parser<'a> {
         Some(ast::Statement::Expression(stmt))
     }
 
-    fn parse_expression(&self, precedence: usize) -> Option<ast::Expression> {
+    fn parse_expression(&mut self, precedence: usize) -> Option<ast::Expression> {
         self.prefix_parse()
     }
 }
@@ -238,7 +287,7 @@ impl<'a> Parser<'a> {
 mod tests {
     use core::panic;
 
-    use ast::{statements::ExpressionStatement, NodeTrait, Statement};
+    use ast::{expressions::IntegerLiteral, NodeTrait, Statement};
 
     use super::*;
 
@@ -355,5 +404,32 @@ mod tests {
         };
 
         assert_eq!(ident.token_literal(), "foobar");
+    }
+
+    #[test]
+    fn test_integer_literal_expression() {
+        let input = "5;";
+
+        let lexer = Lexer::new(&input);
+        let mut parser = Parser::new(lexer);
+        let program = parser.parse_program();
+        check_parser_errors(&parser);
+
+        assert_eq!(
+            program.statements.len(),
+            1,
+            "The program should contain 1 statement"
+        );
+
+        let Statement::Expression(stmt) = &program.statements[0] else {
+            panic!("Statement isn't an expression");
+        };
+
+        let Expression::Integer(integer_literal) = &stmt.expression else {
+            panic!("Expression isn't an Integer");
+        };
+
+        assert_eq!(integer_literal.value, 5);
+        assert_eq!(integer_literal.token_literal(), "5");
     }
 }
