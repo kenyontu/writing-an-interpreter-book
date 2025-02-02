@@ -3,7 +3,7 @@ pub mod statements;
 
 use std::fmt::Display;
 
-use expressions::{IdentExpression, IntegerLiteral};
+use expressions::{IdentExpression, IntegerLiteral, PrefixExpression};
 use statements::{ExpressionStatement, LetStatement, ReturnStatement};
 
 pub trait NodeTrait: Display {
@@ -48,6 +48,7 @@ impl Statement {
 pub enum Expression {
     Ident(IdentExpression),
     Integer(IntegerLiteral),
+    Prefix(PrefixExpression),
 }
 
 impl Expression {
@@ -56,6 +57,7 @@ impl Expression {
         match self {
             Ident(e) => e.to_string(),
             Integer(e) => e.to_string(),
+            Prefix(e) => e.to_string(),
         }
     }
 }

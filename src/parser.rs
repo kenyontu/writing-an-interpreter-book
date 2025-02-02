@@ -3,7 +3,7 @@ use std::{borrow::BorrowMut, mem};
 use crate::{
     ast::{
         self,
-        expressions::{IdentExpression, IntegerLiteral},
+        expressions::{IdentExpression, IntegerLiteral, PrefixExpression},
         statements::{ExpressionStatement, LetStatement, ReturnStatement},
         Expression,
     },
@@ -227,6 +227,21 @@ impl<'a> Parser<'a> {
         Some(ast::Expression::Integer(lit))
     }
 
+    fn parse_prefix_expression(&mut self) -> Option<ast::Expression> {
+        let token = self.cur_token.clone();
+        let operator = token.literal.clone();
+        self.next_token();
+
+        let right = self.parse_expression(Precedence::Prefix.value())?;
+        let prefix = PrefixExpression {
+            token,
+            operator,
+            right: Box::new(right),
+        };
+
+        Some(ast::Expression::Prefix(prefix))
+    }
+
     fn prefix_parse(&mut self) -> Option<ast::Expression> {
         match self.cur_token.token_type {
             TokenType::Illegal => todo!(),
@@ -235,8 +250,8 @@ impl<'a> Parser<'a> {
             TokenType::Int => self.parse_integer_literal(),
             TokenType::Assign => todo!(),
             TokenType::Plus => todo!(),
-            TokenType::Minus => todo!(),
-            TokenType::Bang => todo!(),
+            TokenType::Minus => self.parse_prefix_expression(),
+            TokenType::Bang => self.parse_prefix_expression(),
             TokenType::Asterisk => todo!(),
             TokenType::Slash => todo!(),
             TokenType::Comma => todo!(),
@@ -318,6 +333,32 @@ mod tests {
             eprintln!("Parser error: {}", error)
         }
         panic!()
+    }
+
+    fn test_integer_literal(expression: &Expression, value: &i64) -> bool {
+        let Expression::Integer(int) = expression else {
+            eprintln!(
+                "Expression isn't an Integer, got {}",
+                expression.to_string()
+            );
+            return false;
+        };
+
+        if &int.value != value {
+            eprintln!("Integer value is not \"{}\", got \"{}\"", value, int.value);
+            return false;
+        }
+
+        if int.token_literal() != value.to_string() {
+            eprintln!(
+                "Integer token literal isn't \"{}\", got \"{}\"",
+                value,
+                int.token_literal()
+            );
+            return false;
+        }
+
+        true
     }
 
     #[test]
@@ -431,5 +472,39 @@ mod tests {
 
         assert_eq!(integer_literal.value, 5);
         assert_eq!(integer_literal.token_literal(), "5");
+    }
+
+    #[test]
+    fn test_parsing_prefix_expressions() {
+        let tests: Vec<(&str, &str, i64)> = vec![("!5;", "!", 5), ("-15;", "-", 15)];
+
+        for (input, operator, value) in tests.iter() {
+            let lexer = Lexer::new(input);
+            let mut parser = Parser::new(lexer);
+            let program = parser.parse_program();
+            check_parser_errors(&parser);
+
+            assert_eq!(
+                program.statements.len(),
+                1,
+                "The program should have 1 statement"
+            );
+
+            let Statement::Expression(stmt) = &program.statements[0] else {
+                panic!("Statement isn't an expression");
+            };
+
+            let Expression::Prefix(prefix) = &stmt.expression else {
+                panic!("Statement isn't a prefix expression");
+            };
+
+            assert_eq!(
+                &prefix.operator, operator,
+                "Operator is not \"{}\", got \"{}\"",
+                operator, prefix.operator
+            );
+
+            assert!(test_integer_literal(prefix.right.as_ref(), value));
+        }
     }
 }
